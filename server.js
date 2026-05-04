@@ -17,16 +17,16 @@ const NIM_API_BASE = process.env.NIM_API_BASE || 'https://integrate.api.nvidia.c
 const NIM_API_KEY = process.env.NIM_API_KEY;
 
 const SHOW_REASONING = false;
-const THINKING_MODE = false;
+const THINKING_MODE = false; // Options: false, "think_high", "think_max"
 
 const MODEL_MAPPING = {
-  'gpt-3.5-turbo':  'deepseek-ai/deepseek-v4-flash',
-  'gpt-4':          'deepseek-ai/deepseek-v4-flash',
-  'gpt-4-turbo':    'deepseek-ai/deepseek-v4-flash',
-  'gpt-4o':         'deepseek-ai/deepseek-v4-flash',
-  'claude-3-opus':  'deepseek-ai/deepseek-v4-flash',
-  'claude-3-sonnet':'deepseek-ai/deepseek-v4-flash',
-  'gemini-pro':     'deepseek-ai/deepseek-v4-flash'
+  'gpt-3.5-turbo':  'deepseek-ai/deepseek-v4-pro',
+  'gpt-4':          'deepseek-ai/deepseek-v4-pro',
+  'gpt-4-turbo':    'deepseek-ai/deepseek-v4-pro',
+  'gpt-4o':         'deepseek-ai/deepseek-v4-pro',
+  'claude-3-opus':  'deepseek-ai/deepseek-v4-pro',
+  'claude-3-sonnet':'deepseek-ai/deepseek-v4-pro',
+  'gemini-pro':     'deepseek-ai/deepseek-v4-pro'
 };
 
 // Health check
@@ -34,7 +34,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'OpenAI to NVIDIA NIM Proxy',
-    model: 'deepseek-ai/deepseek-v4-flash',
+    model: 'deepseek-ai/deepseek-v4-pro',
     reasoning_display: SHOW_REASONING,
     thinking_mode: THINKING_MODE ? THINKING_MODE : 'disabled'
   });
@@ -58,7 +58,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens, stream } = req.body;
 
-    const nimModel = MODEL_MAPPING[model] || 'deepseek-ai/deepseek-v4-flash';
+    const nimModel = MODEL_MAPPING[model] || 'deepseek-ai/deepseek-v4-pro';
 
     const nimRequest = {
       model: nimModel,
@@ -68,9 +68,11 @@ app.post('/v1/chat/completions', async (req, res) => {
       stream: stream || false
     };
 
-    if (THINKING_MODE) {
-      nimRequest.extra_body = { chat_template_kwargs: { thinking: THINKING_MODE } };
-    }
+    // DeepSeek V4 Pro/Flash on NVIDIA NIM REQUIRES these params or it hangs forever
+    nimRequest.chat_template_kwargs = {
+      enable_thinking: true,
+      thinking: THINKING_MODE || true
+    };
 
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
