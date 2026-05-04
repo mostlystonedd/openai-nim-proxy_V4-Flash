@@ -68,9 +68,11 @@ app.post('/v1/chat/completions', async (req, res) => {
       stream: stream || false
     };
 
-    if (THINKING_MODE) {
-      nimRequest.extra_body = { chat_template_kwargs: { thinking: THINKING_MODE } };
-    }
+    // DeepSeek V4 Pro/Flash on NVIDIA NIM REQUIRES these params or it hangs forever
+    nimRequest.chat_template_kwargs = {
+      enable_thinking: true,
+      thinking: THINKING_MODE || true
+    };
 
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
