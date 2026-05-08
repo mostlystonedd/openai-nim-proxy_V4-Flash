@@ -90,7 +90,8 @@ app.post('/v1/chat/completions', async (req, res) => {
         'Authorization': `Bearer ${getNextKey()}`,
         'Content-Type': 'application/json'
       },
-      responseType: stream ? 'stream' : 'json'
+      responseType: stream ? 'stream' : 'json',
+      timeout: 120000 // wait up to 2 minutes for NVIDIA to respond
     });
 
     if (stream) {
