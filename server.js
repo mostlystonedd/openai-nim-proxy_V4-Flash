@@ -16,7 +16,6 @@ app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 const NIM_API_BASE = process.env.NIM_API_BASE || 'https://integrate.api.nvidia.com/v1';
 
-// Key rotation - add up to 3 NVIDIA API keys
 const NIM_API_KEYS = [
   process.env.NIM_API_KEY,
   process.env.NIM_API_KEY_2,
@@ -45,7 +44,6 @@ const MODEL_MAPPING = {
   'gemini-pro':     'deepseek-ai/deepseek-v4-flash'
 };
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -57,7 +55,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// List models
 app.get('/v1/models', (req, res) => {
   res.json({
     object: 'list',
@@ -70,7 +67,6 @@ app.get('/v1/models', (req, res) => {
   });
 });
 
-// Chat completions
 app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens, stream } = req.body;
@@ -179,14 +175,12 @@ app.post('/v1/chat/completions', async (req, res) => {
   }
 });
 
-// 404 catch-all
 app.all('*', (req, res) => {
   res.status(404).json({
     error: { message: `Endpoint ${req.path} not found`, type: 'invalid_request_error', code: 404 }
   });
 });
 
-// Local dev
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Proxy running on port ${PORT}`);
