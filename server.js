@@ -11,10 +11,24 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.options('*', cors());
-app.use(express.json({ limit: '100mb' })); app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 const NIM_API_BASE = process.env.NIM_API_BASE || 'https://integrate.api.nvidia.com/v1';
-const NIM_API_KEY = process.env.NIM_API_KEY;
+
+// Key rotation - add up to 3 NVIDIA API keys
+const NIM_API_KEYS = [
+  process.env.NIM_API_KEY,
+  process.env.NIM_API_KEY_2,
+  process.env.NIM_API_KEY_3
+].filter(Boolean);
+
+let currentKeyIndex = 0;
+function getNextKey() {
+  const key = NIM_API_KEYS[currentKeyIndex];
+  currentKeyIndex = (currentKeyIndex + 1) % NIM_API_KEYS.length;
+  return key;
+}
 
 const SHOW_REASONING = false;
 const THINKING_MODE = false;
@@ -24,6 +38,8 @@ const MODEL_MAPPING = {
   'gpt-4':          'deepseek-ai/deepseek-v4-flash',
   'gpt-4-turbo':    'deepseek-ai/deepseek-v4-flash',
   'gpt-4o':         'deepseek-ai/deepseek-v4-flash',
+  'gpt-5':          'deepseek-ai/deepseek-v4-flash',
+  'gpt-5.5':        'deepseek-ai/deepseek-v4-flash',
   'claude-3-opus':  'deepseek-ai/deepseek-v4-flash',
   'claude-3-sonnet':'deepseek-ai/deepseek-v4-flash',
   'gemini-pro':     'deepseek-ai/deepseek-v4-flash'
@@ -35,6 +51,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     service: 'OpenAI to NVIDIA NIM Proxy',
     model: 'deepseek-ai/deepseek-v4-flash',
+    active_keys: NIM_API_KEYS.length,
     reasoning_display: SHOW_REASONING,
     thinking_mode: THINKING_MODE ? THINKING_MODE : 'disabled'
   });
@@ -74,7 +91,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
-        'Authorization': `Bearer ${NIM_API_KEY}`,
+        'Authorization': `Bearer ${getNextKey()}`,
         'Content-Type': 'application/json'
       },
       responseType: stream ? 'stream' : 'json'
@@ -174,6 +191,7 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Proxy running on port ${PORT}`);
     console.log(`Health: http://localhost:${PORT}/health`);
+    console.log(`Active keys: ${NIM_API_KEYS.length}`);
   });
 }
 
