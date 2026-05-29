@@ -30,7 +30,7 @@ function getNextKey() {
 }
 
 const SHOW_REASONING = false;
-const THINKING_MODE = "think_high";
+const THINKING_MODE = false;
 
 const MODEL_MAPPING = {
   'gpt-3.5-turbo':  'deepseek-ai/deepseek-v4-flash',
