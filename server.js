@@ -25,6 +25,7 @@ const NIM_API_KEYS = [
 let currentKeyIndex = 0;
 function getNextKey() {
   const key = NIM_API_KEYS[currentKeyIndex];
+  console.log(`Using key index: ${currentKeyIndex + 1} of ${NIM_API_KEYS.length}`);
   currentKeyIndex = (currentKeyIndex + 1) % NIM_API_KEYS.length;
   return key;
 }
@@ -70,7 +71,6 @@ app.get('/v1/models', (req, res) => {
 app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens, stream } = req.body;
-
     const nimModel = MODEL_MAPPING[model] || 'deepseek-ai/deepseek-v4-flash';
 
     const nimRequest = {
@@ -91,7 +91,7 @@ app.post('/v1/chat/completions', async (req, res) => {
         'Content-Type': 'application/json'
       },
       responseType: stream ? 'stream' : 'json',
-      timeout: 120000 // wait up to 2 minutes for NVIDIA to respond
+      timeout: 120000
     });
 
     if (stream) {
